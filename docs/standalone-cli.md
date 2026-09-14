@@ -1,6 +1,7 @@
 # Standalone terminal apps
 
-This folder contains everything needed to use Rookhold from a terminal:
+This quickstart ships in every release archive as `QUICKSTART.md`. It covers
+everything needed to use Rookhold from a terminal:
 
 - `rookhold` runs one job, checks a connection, configures an MCP host, or starts the service;
 - `rookhold-cli` is the interactive human client; and

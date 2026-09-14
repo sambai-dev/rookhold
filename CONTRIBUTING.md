@@ -35,7 +35,41 @@ $env:ROOKHOLD_API_KEYS = "local:dev-key"
 cargo run -p coop-server
 ```
 
-The real containment suite requires a supported Linux x86_64 kernel, cgroup v2, namespaces, the matching sandbox helper, a trusted private rootfs, and elevated privileges. Follow the complete setup and command in the [README](README.md#verification). Do not run the hostile-job suite on a workstation that contains important unsaved work. A dedicated Linux VM is preferred.
+The real containment suite requires a supported Linux x86_64 kernel, cgroup v2, namespaces, the matching sandbox helper, a trusted private rootfs, and elevated privileges. Follow the complete setup in the [deployment guide](docs/deployment.md); the workspace map in [crates/README.md](crates/README.md) shows where each component lives. Do not run the hostile-job suite on a workstation that contains important unsaved work. A dedicated Linux VM is preferred.
+
+## Repository layout
+
+- `crates/` — the Rust workspace. `coop-server` is the HTTP gateway, scheduler,
+  and embedded dashboard; `coop-exec` holds the execution providers
+  (development subprocess, Linux namespaces, gVisor OCI);
+  `coop-store` persists jobs, events, and evidence in SQLite;
+  `coop-attestation` signs and verifies receipts and builds `rookhold-verify`;
+  `coop-types` holds the shared API types and global limits. The `coop-*` crate
+  and module names are durable compatibility identities; shipped binaries and
+  documentation use the Rookhold names, with `coop-*` binaries kept only as
+  legacy aliases.
+- `crates/coop-server/tests/fixtures/hostile-jobs/` — adversarial payloads
+  (fork bombs, escape probes) for the ignored containment suite. Treat them as
+  test fixtures, not sample jobs.
+- `sdks/` — the Python and TypeScript client SDKs, including the `rookhold-cli`
+  and `rookhold-mcp` adapters.
+- `docs/` — the VitePress documentation site; `docs/public/` is deployed as-is.
+- `scripts/` — release, verification, and drift-gate automation.
+  `check-release-surface.py` is the central consistency gate and pins many of
+  the paths in this map; `scripts/tests/` holds its unittest suite.
+- `integrations/` — MCP host configuration snippets (Claude Code, OpenCode,
+  Hermes, OpenClaw).
+- `templates/` — starter applications (Next.js and FastAPI runners).
+- `examples/` — runnable recipes referenced by the docs.
+- `deploy/` — systemd unit, Caddy example, and production env template.
+- `assets/` — demo captures and product-evidence media; not part of the site.
+- Root files: `README.md` (product overview), `CONTRIBUTING.md` (this guide),
+  `SECURITY.md` (vulnerability policy), `AUDIT.md` (security review record),
+  `DESIGN.md` (visual system), `PRODUCT.md` (product schema), `CHANGELOG.md`
+  (release log), and `release.json` (canonical release URLs).
+
+Keep this map current: moving or renaming top-level files usually requires
+updating `scripts/check-release-surface.py` in the same change.
 
 ## Contribution tiers
 

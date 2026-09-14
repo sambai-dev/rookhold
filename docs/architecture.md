@@ -117,3 +117,13 @@ Running multiple Rookhold servers against the same SQLite file is unsupported. A
 - KMS/HSM custody, public-key history, transparency anchoring, or remote hardware attestation
 - hardware/confidential-VM claims beyond the implemented gVisor application-kernel class
 - multi-node scheduling
+
+## Where things live
+
+The crate boundaries above map to the workspace as follows: `coop-types`,
+`coop-store`, `coop-attestation`, and `coop-exec` are independent libraries,
+and `coop-server` composes them into the service process. For the per-crate
+module map, the binary layout, and the naming rationale, see
+[crates/README.md](https://github.com/sambai-dev/rookhold/blob/main/crates/README.md).
+The adversarial payloads used to prove the executor boundary live in
+[crates/coop-server/tests/fixtures/hostile-jobs](https://github.com/sambai-dev/rookhold/tree/main/crates/coop-server/tests/fixtures/hostile-jobs).
