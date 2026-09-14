@@ -286,15 +286,15 @@ async fn assert_host_still_serves(app: &Router) {
     );
 }
 
-const FORK_BOMB: &str = include_str!("../../../hostile-jobs/fork_bomb.sh");
-const BACKGROUND_HOLDER: &str = include_str!("../../../hostile-jobs/background_holder.sh");
-const MEMORY_BOMB: &str = include_str!("../../../hostile-jobs/memory_bomb.py");
-const INFINITE_LOOP: &str = include_str!("../../../hostile-jobs/infinite_loop.py");
-const NETWORK_PROBE: &str = include_str!("../../../hostile-jobs/network_probe.py");
-const DISK_FILLER: &str = include_str!("../../../hostile-jobs/disk_filler.py");
-const ESCAPE_PROBE: &str = include_str!("../../../hostile-jobs/escape_probe.py");
-const PID_BOMB: &str = include_str!("../../../hostile-jobs/pid_bomb.py");
-const PTRACE_PROBE: &str = include_str!("../../../hostile-jobs/ptrace_probe.py");
+const FORK_BOMB: &str = include_str!("fixtures/hostile-jobs/fork_bomb.sh");
+const BACKGROUND_HOLDER: &str = include_str!("fixtures/hostile-jobs/background_holder.sh");
+const MEMORY_BOMB: &str = include_str!("fixtures/hostile-jobs/memory_bomb.py");
+const INFINITE_LOOP: &str = include_str!("fixtures/hostile-jobs/infinite_loop.py");
+const NETWORK_PROBE: &str = include_str!("fixtures/hostile-jobs/network_probe.py");
+const DISK_FILLER: &str = include_str!("fixtures/hostile-jobs/disk_filler.py");
+const ESCAPE_PROBE: &str = include_str!("fixtures/hostile-jobs/escape_probe.py");
+const PID_BOMB: &str = include_str!("fixtures/hostile-jobs/pid_bomb.py");
+const PTRACE_PROBE: &str = include_str!("fixtures/hostile-jobs/ptrace_probe.py");
 
 #[tokio::test]
 #[ignore]
