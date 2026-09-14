@@ -16,6 +16,12 @@ receive a short piece of code but should not hand it the host machine. It is a
 bounded job runner—not a persistent workspace, browser environment, remote IDE,
 or general-purpose cloud sandbox.
 
+<p align="center">
+  <img src="https://github.com/sambai-dev/rookhold/blob/main/assets/rookhold-cli-mcp-demo.gif"
+       alt="Rookhold terminal demo: running a short Python job with hard limits and saving the verifiable receipt"
+       width="720">
+</p>
+
 ## Try Rookhold locally
 
 Choose the complete **Rookhold app** bundle. It contains
@@ -207,6 +213,7 @@ untrusted jobs.
 
 - [Getting started](https://rookhold.pages.dev/getting-started/quickstart)
 - [Installation choices](https://rookhold.pages.dev/getting-started/installation)
+- [How Rookhold compares](https://rookhold.pages.dev/compare)
 - [Execution model](https://rookhold.pages.dev/understand/execution-model)
 - [Receipts and verification](https://rookhold.pages.dev/understand/receipts)
 - [Deployment and operations](https://rookhold.pages.dev/deployment)
@@ -238,7 +245,9 @@ cargo build --locked --workspace
 ```
 
 Run the complete checks from [CONTRIBUTING.md](CONTRIBUTING.md) before opening a
-pull request.
+pull request. The [workspace map](crates/README.md) explains how the crates fit
+together; the [automation map](scripts/README.md) does the same for the release
+and verification scripts.
 
 ## License
 

@@ -43,6 +43,7 @@ export default defineConfig({
           items: [
             { text: "Quickstart", link: "/getting-started/quickstart" },
             { text: "Installation", link: "/getting-started/installation" },
+            { text: "How Rookhold compares", link: "/compare" },
             { text: "First secure Linux deployment", link: "/getting-started/first-secure-deployment" },
           ],
         },
@@ -63,6 +64,7 @@ export default defineConfig({
         {
           text: "Understand Rookhold",
           items: [
+            { text: "Architecture", link: "/architecture" },
             { text: "Execution model", link: "/understand/execution-model" },
             { text: "Limits", link: "/understand/limits" },
             { text: "Receipts", link: "/understand/receipts" },
