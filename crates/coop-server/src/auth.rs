@@ -868,6 +868,11 @@ fn parse_jwks(
             AlgorithmParameters::EllipticCurve(_) => JwtKeyFamily::Ec,
             AlgorithmParameters::OctetKeyPair(_) => JwtKeyFamily::Ed,
             AlgorithmParameters::OctetKey(_) => continue,
+            // jsonwebtoken 11 added `Other` and marked the enum
+            // non-exhaustive: unknown key types cannot be verified by
+            // known code, so skip them like symmetric keys (deny by
+            // default) rather than accepting them into the cache.
+            _ => continue,
         };
         let Some(kid) = jwk.common.key_id.as_deref() else {
             continue;
@@ -983,6 +988,10 @@ fn jwt_algorithm_family(algorithm: Algorithm) -> Option<JwtKeyFamily> {
         Algorithm::ES256 | Algorithm::ES384 => Some(JwtKeyFamily::Ec),
         Algorithm::EdDSA => Some(JwtKeyFamily::Ed),
         Algorithm::HS256 | Algorithm::HS384 | Algorithm::HS512 => None,
+        // `Algorithm` is non-exhaustive since jsonwebtoken 11: future
+        // algorithms have no known family, so verification rejects them
+        // at the family check (fail closed).
+        _ => None,
     }
 }
 
@@ -1538,6 +1547,28 @@ GcZ0izY/30012ajdHY+/QK5lsMoxTnn0skdS+spLxaS5ZEO4qvPVb8RAoCkWMMal
         let store = CredentialStore::load(&credentials_path, &pepper_path, false)
             .expect("load credential fixture");
         (store, key)
+    }
+
+    #[test]
+    fn jwt_algorithm_family_maps_known_algorithms() {
+        use Algorithm::*;
+        let cases = [
+            (RS256, Some(JwtKeyFamily::Rsa)),
+            (RS384, Some(JwtKeyFamily::Rsa)),
+            (RS512, Some(JwtKeyFamily::Rsa)),
+            (PS256, Some(JwtKeyFamily::Rsa)),
+            (PS384, Some(JwtKeyFamily::Rsa)),
+            (PS512, Some(JwtKeyFamily::Rsa)),
+            (ES256, Some(JwtKeyFamily::Ec)),
+            (ES384, Some(JwtKeyFamily::Ec)),
+            (EdDSA, Some(JwtKeyFamily::Ed)),
+            (HS256, None),
+            (HS384, None),
+            (HS512, None),
+        ];
+        for (algorithm, expected) in cases {
+            assert_eq!(jwt_algorithm_family(algorithm), expected, "{algorithm:?}");
+        }
     }
 
     #[test]
