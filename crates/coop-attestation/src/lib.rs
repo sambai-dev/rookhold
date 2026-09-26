@@ -21,12 +21,13 @@ mod strict_json;
 pub use ed25519_dalek::{SigningKey, VerifyingKey};
 pub use error::AttestationError;
 pub use format::{
-    build_statement, build_statement_from_receipt_json, create_attestation, dsse_v1_pae,
-    encode_statement, sign_statement, verify_attestation, ArtifactDigest, CoopExecutionPredicateV1,
-    CoopResultDescriptorV1, DsseEnvelope, DsseSignature, ResourceDescriptor, StatementV1,
-    SubjectArtifact, VerificationPolicy, VerifiedAttestation, COOP_EXECUTION_PREDICATE_TYPE,
-    COOP_EXECUTION_SCHEMA_VERSION, DSSE_PAYLOAD_TYPE, IN_TOTO_STATEMENT_TYPE, MAX_ENVELOPE_BYTES,
-    MAX_SIGNATURES, MAX_STATEMENT_BYTES, MAX_TRUSTED_KEYS,
+    build_statement, build_statement_from_receipt_json, bytes_to_hex, create_attestation,
+    dsse_v1_pae, encode_statement, sign_statement, verify_attestation, ArtifactDigest,
+    CoopExecutionPredicateV1, CoopResultDescriptorV1, DsseEnvelope, DsseSignature,
+    ResourceDescriptor, StatementV1, SubjectArtifact, VerificationPolicy, VerifiedAttestation,
+    COOP_EXECUTION_PREDICATE_TYPE, COOP_EXECUTION_SCHEMA_VERSION, DSSE_PAYLOAD_TYPE,
+    IN_TOTO_STATEMENT_TYPE, MAX_ENVELOPE_BYTES, MAX_SIGNATURES, MAX_STATEMENT_BYTES,
+    MAX_TRUSTED_KEYS,
 };
 pub use keys::{
     decode_private_key_pem, decode_public_key_pem, encode_private_key_pem, encode_public_key_pem,

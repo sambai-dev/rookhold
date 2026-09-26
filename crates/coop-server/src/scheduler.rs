@@ -1,6 +1,7 @@
 use crate::bus::WireEvent;
 use crate::AppState;
 use base64::Engine as _;
+use coop_attestation::bytes_to_hex;
 use coop_exec::{ExecContext, Sink, Stream};
 use coop_types::{EffectiveLimits, JobSpec, JobStatus, LimitEnforcement};
 use futures_util::FutureExt;
@@ -1578,7 +1579,7 @@ async fn collect_output_artifacts(
                 "path": requested,
                 "content_base64": base64::engine::general_purpose::STANDARD.encode(&bytes),
                 "size_bytes": bytes.len(),
-                "sha256": format!("{:x}", Sha256::digest(&bytes)),
+                "sha256": bytes_to_hex(Sha256::digest(&bytes).as_slice()),
             }));
         }
         Ok(artifacts)
@@ -1809,8 +1810,8 @@ impl OutputEvidence {
             "encoding": "utf8-event-lines-joined-by-lf-no-trailing-lf",
             "stdout_bytes": self.stdout_bytes,
             "stderr_bytes": self.stderr_bytes,
-            "stdout_sha256": format!("{:x}", self.stdout.clone().finalize()),
-            "stderr_sha256": format!("{:x}", self.stderr.clone().finalize()),
+            "stdout_sha256": bytes_to_hex(self.stdout.clone().finalize().as_slice()),
+            "stderr_sha256": bytes_to_hex(self.stderr.clone().finalize().as_slice()),
             "truncated": self.truncated,
         })
     }
@@ -2113,7 +2114,7 @@ async fn try_build_receipt(
                     Some(json!({
                         "path": file.path,
                         "size_bytes": bytes.len(),
-                        "sha256": format!("{:x}", Sha256::digest(&bytes)),
+                        "sha256": bytes_to_hex(Sha256::digest(&bytes).as_slice()),
                     }))
                 })
                 .collect::<Vec<_>>()
@@ -2151,8 +2152,8 @@ async fn try_build_receipt(
         "evidence_complete": terminal.output.persistence_complete,
         "requested_limits": requested.get("limits").cloned().unwrap_or(Value::Null),
         "requirements": requested.get("requirements").cloned().unwrap_or_else(|| json!({"minimum_isolation": "none"})),
-        "code_sha256": format!("{:x}", Sha256::digest(code.as_bytes())),
-        "stdin_sha256": format!("{:x}", Sha256::digest(stdin.as_bytes())),
+        "code_sha256": bytes_to_hex(Sha256::digest(code.as_bytes()).as_slice()),
+        "stdin_sha256": bytes_to_hex(Sha256::digest(stdin.as_bytes()).as_slice()),
         "resource_usage": terminal.telemetry.map(|telemetry| json!({
             "wall_time_ms": telemetry.wall_time_ms,
             "cpu_time_usec": telemetry.cpu_time_usec,
@@ -2240,7 +2241,7 @@ async fn try_build_receipt(
         receipt["rootfs_sha256"] = json!(provenance.rootfs_sha256);
         receipt["config_sha256"] = json!(provenance.config_sha256);
         receipt["runtime_pack"] = json!(spec.runtime);
-        receipt["policy_sha256"] = json!(format!("{:x}", Sha256::digest(&policy_bytes)));
+        receipt["policy_sha256"] = json!(bytes_to_hex(Sha256::digest(&policy_bytes).as_slice()));
     }
     Ok(BuiltTerminalEvidence {
         receipt: Some(receipt),
@@ -2651,7 +2652,7 @@ mod admission_tests {
         assert_eq!(evidence.stdout_bytes, encoded.len() as u64);
         assert_eq!(
             evidence.as_json()["stdout_sha256"],
-            format!("{:x}", Sha256::digest(encoded))
+            format!("{}", bytes_to_hex(Sha256::digest(encoded).as_slice()))
         );
         assert_eq!(
             evidence.as_json()["encoding"],

@@ -80,7 +80,7 @@ impl ArtifactDigest {
             )?;
         }
         Ok(Self {
-            sha256: format!("{:x}", hasher.finalize()),
+            sha256: bytes_to_hex(hasher.finalize().as_slice()),
             size_bytes,
         })
     }
@@ -1320,7 +1320,13 @@ pub fn dsse_v1_pae(payload_type: &str, payload: &[u8]) -> Result<Vec<u8>, Attest
 }
 
 fn sha256_hex(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    bytes_to_hex(Sha256::digest(bytes).as_slice())
+}
+
+/// Lowercase hexadecimal encoding without relying on a `LowerHex` impl
+/// for the digest output type (generic-array 1.x no longer provides one).
+pub fn bytes_to_hex(bytes: &[u8]) -> String {
+    bytes.iter().map(|byte| format!("{byte:02x}")).collect()
 }
 
 #[cfg(test)]

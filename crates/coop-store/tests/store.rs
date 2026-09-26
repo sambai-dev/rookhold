@@ -16,6 +16,14 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 static NEXT_PATH: AtomicU64 = AtomicU64::new(0);
 
+fn sha256_hex(input: &[u8]) -> String {
+    Sha256::digest(input)
+        .as_slice()
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect()
+}
+
 fn test_db(label: &str) -> PathBuf {
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -93,7 +101,7 @@ fn bound_attestation_bytes(
         "status": status,
     }))
     .unwrap();
-    let result_sha256 = format!("{:x}", Sha256::digest(&result));
+    let result_sha256 = sha256_hex(&result);
     let subject_name = format!("coop://jobs/{job_id}/result");
     let statement = serde_json::to_vec(&json!({
         "_type": "https://in-toto.io/Statement/v1",
@@ -141,7 +149,7 @@ fn unbound_attestation_bytes(
     let mut result: serde_json::Value = serde_json::from_slice(&bound_result).unwrap();
     result.as_object_mut().unwrap().remove("tenant");
     let result = serde_json::to_vec(&result).unwrap();
-    let result_sha256 = format!("{:x}", Sha256::digest(&result));
+    let result_sha256 = sha256_hex(&result);
 
     let mut envelope: serde_json::Value = serde_json::from_slice(&bound_envelope).unwrap();
     let payload = BASE64_STANDARD
@@ -272,7 +280,7 @@ async fn create_v2_schema(connection: &mut SqliteConnection) {
 
 fn canonical_spec_sha256(spec_json: &str) -> String {
     let value: serde_json::Value = serde_json::from_str(spec_json).unwrap();
-    format!("{:x}", Sha256::digest(canonical_json(&value).as_bytes()))
+    sha256_hex(canonical_json(&value).as_bytes())
 }
 
 #[test]
@@ -590,7 +598,7 @@ fn terminal_finalize_atomically_replaces_initial_effective_spec_and_binds_its_di
                 .unwrap(),
             observed
         );
-        let expected_digest = format!("{:x}", Sha256::digest(canonical_json(&observed).as_bytes()));
+        let expected_digest = sha256_hex(canonical_json(&observed).as_bytes());
         assert_eq!(finished.data["effective_spec_sha256"], expected_digest);
         assert!(store.verify_event_chain("job").await.unwrap().valid);
     });
@@ -2572,8 +2580,8 @@ fn trusted_predecessors_quarantine_unbound_attestation_once() {
                 result_media_type,
                 "succeeded",
             );
-            let result_sha256 = format!("{:x}", Sha256::digest(&result));
-            let envelope_sha256 = format!("{:x}", Sha256::digest(&envelope));
+            let result_sha256 = sha256_hex(&result);
+            let envelope_sha256 = sha256_hex(&envelope);
             let mut connection = raw_connection(&db).await;
             let row_revision: i64 = sqlx::query_scalar(
                 "SELECT row_validation_revision FROM store_integrity WHERE singleton = 1",
@@ -3368,8 +3376,8 @@ fn terminal_outbox_and_exact_attestation_persistence_are_idempotent_immutable_an
             result_media_type,
             "succeeded",
         );
-        let unbound_result_sha256 = format!("{:x}", Sha256::digest(&unbound_result));
-        let unbound_envelope_sha256 = format!("{:x}", Sha256::digest(&unbound_envelope));
+        let unbound_result_sha256 = sha256_hex(&unbound_result);
+        let unbound_envelope_sha256 = sha256_hex(&unbound_envelope);
         let unbound_error = store
             .persist_attestation(
                 "attested",
@@ -3402,8 +3410,8 @@ fn terminal_outbox_and_exact_attestation_persistence_are_idempotent_immutable_an
             result_media_type,
             "succeeded",
         );
-        let result_sha256 = format!("{:x}", Sha256::digest(&result));
-        let envelope_sha256 = format!("{:x}", Sha256::digest(&envelope));
+        let result_sha256 = sha256_hex(&result);
+        let envelope_sha256 = sha256_hex(&envelope);
         let outcome = store
             .persist_attestation(
                 "attested",
@@ -3445,7 +3453,7 @@ fn terminal_outbox_and_exact_attestation_persistence_are_idempotent_immutable_an
             .unwrap();
         assert_eq!(replay, PersistAttestationOutcome::Existing);
         let different = br#"{"job_id":"attested","status":"failed"}"#;
-        let different_sha = format!("{:x}", Sha256::digest(different));
+        let different_sha = sha256_hex(different);
         let error = store
             .persist_attestation(
                 "attested",
@@ -3520,8 +3528,8 @@ fn raw_attestation_byte_tampering_dirties_validation_and_fails_reopen() {
             result_media_type,
             "succeeded",
         );
-        let result_sha256 = format!("{:x}", Sha256::digest(&result));
-        let envelope_sha256 = format!("{:x}", Sha256::digest(&envelope));
+        let result_sha256 = sha256_hex(&result);
+        let envelope_sha256 = sha256_hex(&envelope);
         store
             .persist_attestation(
                 "job",

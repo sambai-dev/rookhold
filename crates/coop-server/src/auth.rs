@@ -4,8 +4,9 @@ use axum::middleware::Next;
 use axum::response::Response;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine as _;
+use coop_attestation::bytes_to_hex;
 use futures_util::StreamExt;
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use jsonwebtoken::jwk::{AlgorithmParameters, JwkSet, KeyOperations, PublicKeyUse};
 use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, Validation};
 use reqwest::redirect::Policy;
@@ -1011,7 +1012,7 @@ fn oidc_principal_id(issuer: &str, subject: &str, client_id: &str) -> String {
     digest.update(subject.as_bytes());
     digest.update(b"\0");
     digest.update(client_id.as_bytes());
-    format!("oidc:{:x}", digest.finalize())
+    format!("oidc:{}", bytes_to_hex(digest.finalize().as_slice()))
 }
 
 fn now_seconds() -> u64 {

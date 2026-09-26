@@ -4,14 +4,14 @@ use axum::Router;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
 use base64::Engine as _;
 use coop_attestation::{
-    dsse_v1_pae, key_id, verify_attestation, write_private_key_file_new, ArtifactDigest,
-    SigningKey, VerificationPolicy, DSSE_PAYLOAD_TYPE,
+    bytes_to_hex, dsse_v1_pae, key_id, verify_attestation, write_private_key_file_new,
+    ArtifactDigest, SigningKey, VerificationPolicy, DSSE_PAYLOAD_TYPE,
 };
 use coop_server::config::Config;
 use coop_server::scheduler;
 use coop_store::Store;
 use ed25519_dalek::Signer as _;
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use sha2::{Digest, Sha256};
 use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::{Connection, SqliteConnection};
@@ -135,7 +135,7 @@ fn legacy_unbound_signed_bytes(
         "status": "succeeded",
     }))
     .unwrap();
-    let artifact_sha256 = format!("{:x}", Sha256::digest(&artifact));
+    let artifact_sha256 = bytes_to_hex(Sha256::digest(&artifact).as_slice());
     let subject_name = format!("coop://jobs/{job_id}/result");
     let statement = serde_json::to_vec(&serde_json::json!({
         "_type": "https://in-toto.io/Statement/v1",
@@ -662,7 +662,10 @@ async fn signed_attestation_surfaces_return_exact_verifiable_tenant_scoped_bytes
     let envelope = axum::body::to_bytes(envelope_response.into_body(), 3 << 20)
         .await
         .unwrap();
-    assert_eq!(format!("{:x}", Sha256::digest(&envelope)), envelope_sha256);
+    assert_eq!(
+        bytes_to_hex(Sha256::digest(&envelope).as_slice()),
+        envelope_sha256
+    );
 
     let result_response = app
         .clone()
@@ -755,8 +758,8 @@ async fn restart_quarantines_unbound_evidence_before_api_advertisement_and_resig
     .is_err());
     drop(seed);
 
-    let legacy_result_sha256 = format!("{:x}", Sha256::digest(&legacy_result));
-    let legacy_envelope_sha256 = format!("{:x}", Sha256::digest(&legacy_envelope));
+    let legacy_result_sha256 = bytes_to_hex(Sha256::digest(&legacy_result).as_slice());
+    let legacy_envelope_sha256 = bytes_to_hex(Sha256::digest(&legacy_envelope).as_slice());
     let mut connection = raw_connection(&db).await;
     let row_revision: i64 = sqlx::query_scalar(
         "SELECT row_validation_revision FROM store_integrity WHERE singleton = 1",

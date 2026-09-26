@@ -9,6 +9,7 @@ use axum::response::{Html, IntoResponse, Response};
 use axum::routing::{delete, get, post};
 use axum::{Extension, Json, Router};
 use base64::Engine as _;
+use coop_attestation::bytes_to_hex;
 use coop_store::{AttestationMetadata, JobCursor, JobRow, JobSummary, ListJobsQuery};
 use coop_types::{
     EffectiveJobSpec, IsolationClass, JobSpec, JobStatus, LimitEnforcement, CPU_MAX_SECONDS,
@@ -412,7 +413,7 @@ fn idempotency_request(
     let canonical = coop_store::canonical_json(&value);
     Ok(Some(coop_store::IdempotencyRequest {
         key: key.to_string(),
-        request_sha256: format!("{:x}", Sha256::digest(canonical.as_bytes())),
+        request_sha256: bytes_to_hex(Sha256::digest(canonical.as_bytes()).as_slice()),
     }))
 }
 

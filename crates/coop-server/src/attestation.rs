@@ -1,9 +1,9 @@
 use crate::config::{AttestationMode, Config};
 use crate::AppState;
 use coop_attestation::{
-    build_statement_from_receipt_json, encode_public_key_pem, key_id, read_private_key_file,
-    sign_statement, verify_attestation, ArtifactDigest, SigningKey, SubjectArtifact,
-    VerificationPolicy,
+    build_statement_from_receipt_json, bytes_to_hex, encode_public_key_pem, key_id,
+    read_private_key_file, sign_statement, verify_attestation, ArtifactDigest, SigningKey,
+    SubjectArtifact, VerificationPolicy,
 };
 use coop_store::{AttestationSourceJob, PersistAttestationOutcome, Store};
 use serde::Serialize;
@@ -285,7 +285,7 @@ fn result_artifact_bytes(
 }
 
 fn sha256_hex(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    bytes_to_hex(Sha256::digest(bytes).as_slice())
 }
 
 pub fn spawn_worker(state: AppState) -> tokio::task::JoinHandle<()> {

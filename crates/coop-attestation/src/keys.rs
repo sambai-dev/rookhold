@@ -1,4 +1,5 @@
 use crate::error::AttestationError;
+use crate::format::bytes_to_hex;
 use ed25519_dalek::pkcs8::{DecodePrivateKey, DecodePublicKey, EncodePrivateKey, EncodePublicKey};
 use ed25519_dalek::{SigningKey, VerifyingKey};
 use pkcs8::LineEnding;
@@ -37,7 +38,10 @@ pub fn generate_signing_key() -> Result<SigningKey, AttestationError> {
 /// the 32-byte Ed25519 public key. Verifiers must still authenticate a
 /// signature with a configured trusted key.
 pub fn key_id(verifying_key: &VerifyingKey) -> String {
-    format!("sha256:{:x}", Sha256::digest(verifying_key.as_bytes()))
+    format!(
+        "sha256:{}",
+        bytes_to_hex(Sha256::digest(verifying_key.as_bytes()).as_slice())
+    )
 }
 
 /// Encode a private key using Rookhold's canonical unencrypted PKCS#8 PEM profile.
