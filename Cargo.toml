@@ -40,7 +40,7 @@ base64 = "0.22.1"
 clap = { version = "4.5.48", features = ["derive"] }
 ed25519-dalek = { version = "2.2.0", features = ["pem", "pkcs8", "rand_core"] }
 rand_core = { version = "0.6", features = ["getrandom"] }
-pkcs8 = { version = "0.10.2", features = ["pem"] }
+pkcs8 = { version = "0.11.0", features = ["pem"] }
 thiserror = "2"
 zeroize = "1.8"
 rustix = { version = "1.1", features = ["process"] }
