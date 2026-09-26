@@ -1334,6 +1334,20 @@ mod tests {
     use super::*;
 
     #[test]
+    fn bytes_to_hex_matches_nist_vector() {
+        // SHA-256("abc") from FIPS 180-4; locks the encoding independently
+        // of the digest crate version (generic-array 1.x dropped LowerHex).
+        assert_eq!(
+            bytes_to_hex(Sha256::digest(b"abc").as_slice()),
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        );
+        assert_eq!(
+            sha256_hex(b"abc"),
+            bytes_to_hex(Sha256::digest(b"abc").as_slice())
+        );
+    }
+
+    #[test]
     fn dsse_pae_matches_v1_shape_and_is_unambiguous() {
         assert_eq!(
             dsse_v1_pae("text/plain", b"hello").unwrap(),

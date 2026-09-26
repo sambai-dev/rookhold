@@ -2652,7 +2652,7 @@ mod admission_tests {
         assert_eq!(evidence.stdout_bytes, encoded.len() as u64);
         assert_eq!(
             evidence.as_json()["stdout_sha256"],
-            format!("{}", bytes_to_hex(Sha256::digest(encoded).as_slice()))
+            bytes_to_hex(Sha256::digest(encoded).as_slice())
         );
         assert_eq!(
             evidence.as_json()["encoding"],
