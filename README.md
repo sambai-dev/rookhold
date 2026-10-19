@@ -108,9 +108,6 @@ Install the v0.8.0 release tarball:
 npm install https://github.com/sambai-dev/rookhold/releases/download/v0.8.0/rookhold-0.8.0.tgz
 ```
 
-Named PyPI and npm installs are temporarily deferred while maintainer registry
-accounts are activated. The release-hosted packages above contain the same SDKs.
-
 ```typescript
 import { Rookhold } from "rookhold";
 
@@ -168,6 +165,13 @@ For every submitted job, Rookhold:
 
 The API and persisted store remain the source of truth. The CLI, SDKs, MCP
 adapter, and dashboard are views over the same contracts.
+
+Under the hood, the gateway enforces pre-commit per-tenant and global admission
+leases, a two-phase `32 MiB → 20 MiB` logical storage reserve across execution
+and asynchronous `attestation_outbox` signing, a length-prefixed SHA-256 event
+hash chain (`MAX_EVENT_BATCH_SIZE = 256` per WAL commit), and full `cgroup.kill`
+descendant teardown. Stage-by-stage latency numbers and single-node scaling
+trade-offs are documented in [docs/architecture.md](docs/architecture.md).
 
 ## Three useful recipes
 

@@ -38,9 +38,21 @@ free of server or store logic. Single file (`src/lib.rs`).
 
 SQLite schema, migrations, and all persistence operations for jobs, ordered
 events, retained artifacts, and attestations, plus transactional tenant/global
-byte quotas and the attestation outbox. Single file (`src/lib.rs`). The store
-knows nothing about HTTP or execution; the jobs table is the current-state
-projection and the events table is the ordered history.
+byte quotas and the attestation outbox:
+
+- `lib.rs` — core `Store` state machine, WAL connection pool, schema migrations,
+  and transactional job/event/outbox operations.
+- `models.rs` — public row projections, quota constants, and the two-phase
+  32 MiB / 20 MiB completion & attestation reserve contract.
+- `receipts.rs` — lexicographic canonical JSON, length-prefixed SHA-256
+  event-chain hashing, and DSSE/in-toto identity binding checks.
+- `triggers.rs` — schema-v4 row-storage and byte-accounting SQLite triggers
+  plus dirty-bit offline tamper detection (`store_integrity`).
+- `filesystem.rs` — disk free-space probes (`statvfs` / `GetDiskFreeSpaceExW`),
+  symlink rejection, and `0600`/`0700` database/sidecar hardening.
+
+The store knows nothing about HTTP or execution; the jobs table is the
+current-state projection and the events table is the ordered history.
 
 ### `coop-exec` — execution providers
 

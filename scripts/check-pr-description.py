@@ -120,6 +120,26 @@ def validate_body(body: str) -> list[str]:
     return sorted(set(errors))
 
 
+def is_dependabot_security_pr(pull_request: dict[str, object]) -> bool:
+    """Allow GitHub Dependabot security-update PRs that carry signed metadata.
+
+    Human and agent PRs must declare Tier A/B/C scope and validation evidence.
+    GitHub's built-in Dependabot security updates generate fixed YAML metadata
+    (`updated-dependencies:`) instead of repository PR templates; requiring
+    both the `dependabot[bot]` actor and the metadata block prevents arbitrary
+    PRs from bypassing the template gate.
+    """
+    user = pull_request.get("user")
+    login = user.get("login") if isinstance(user, dict) else None
+    body = pull_request.get("body")
+    return (
+        login == "dependabot[bot]"
+        and isinstance(body, str)
+        and "updated-dependencies:" in body
+        and "Signed-off-by: dependabot[bot]" in body
+    )
+
+
 def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(description=__doc__)
     root.add_argument("--event", type=Path, required=True)
@@ -133,6 +153,9 @@ def main() -> int:
         pull_request = event.get("pull_request")
         if not isinstance(pull_request, dict):
             print("PR description check skipped: event is not a pull request")
+            return 0
+        if is_dependabot_security_pr(pull_request):
+            print("PR description check OK: verified dependabot[bot] metadata")
             return 0
         body = pull_request.get("body")
         errors = validate_body(body if isinstance(body, str) else "")

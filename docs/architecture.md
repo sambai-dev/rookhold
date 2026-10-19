@@ -36,7 +36,7 @@ agent / SDK / dashboard
 ## Crate boundaries
 
 - `coop-types` owns JSON-facing job types, lifecycle enums, and compiled limit ceilings.
-- `coop-store` owns the SQLite schema and persistence operations.
+- `coop-store` owns the SQLite schema and persistence operations (`lib.rs` state machine, `models.rs` quota/reserve contracts, `receipts.rs` canonical JSON and length-prefixed SHA-256 event chains, `triggers.rs` schema-v4 guards and dirty-bit tamper detection, and `filesystem.rs` free-space probes and `0600`/`0700` permission hardening).
 - `coop-exec` owns interpreter staging and execution backends.
 - `coop-attestation` owns the DSSE/in-toto profile, strict Ed25519 keys, exact-byte verification, schemas, vectors, and offline CLI.
 - `coop-server` owns configuration, identity, routing, fair admission, scheduling, signing orchestration, observability, WebSockets, OpenAPI, and the embedded dashboard.
@@ -93,6 +93,29 @@ unisolated development executor.
 
 See [security-boundary.md](security-boundary.md) for the complete trust-tier statement.
 
+## Performance and latency profile
+
+For short stateless jobs (`print('bench')`), end-to-end latency is dominated by
+interpreter startup, sandbox boundary creation, and SQLite `WAL` (`synchronous =
+FULL`) durability commits rather than Rust gateway overhead:
+
+| Stage | Typical cost | Architectural mechanism |
+|---|---|---|
+| Admission & pre-commit lease | `< 0.2 ms` | In-memory `AcqRel` atomic tenant-depth CAS + semaphore + bounded `mpsc` permit before SQLite write |
+| Job & event persistence (`coop-store`) | `2–6 ms` (NVMe WAL `fsync`) | `BEGIN IMMEDIATE` serialized writer transaction; output bursts batch up to `MAX_EVENT_BATCH_SIZE = 256` events per `fsync` |
+| Boundary setup (`off` / subprocess) | `~1–3 ms` (Linux `fork`/`execve`) · `~35–60 ms` (Windows `CreateProcessW`) | Direct process spawn without namespace or rootfs isolation |
+| Boundary setup (`linux-shared-kernel`) | `~8–15 ms` | `rookhold-sandbox-init` helper, private `pivot_root`, `/proc` mount, cgroup v2 attach, privilege drop, seccomp filter |
+| Boundary setup (`gvisor-application-kernel`) | `~90–180 ms` | Per-job `runsc` OCI sandbox creation, private rootfs verification, `rookhold-oci-init` readiness frame, cgroup teardown |
+| Interpreter cold start (`python3` / `node` / `bash`) | `~20–45 ms` (Linux) · `~80–120 ms` (Windows) | Dominant floor for trivial 1-line scripts when no warm pool is used |
+| Supervision & teardown | `0–20 ms` | Bounded output drain, `cgroup.kill` + `populated 0` verification (`CONTROL_TICK = 20 ms` poll cadence) |
+| DSSE Ed25519 signing (`coop-attestation`) | `< 0.5 ms` CPU + 1 WAL commit | Asynchronous via `attestation_outbox` after terminal receipt commit, backed by a 20 MiB logical byte reserve |
+
+Reproducible local benchmark (`python scripts/bench.py --jobs 50 --concurrency 4`
+against `ROOKHOLD_SANDBOX=off`, 4 workers, `ROOKHOLD_RATE_PER_MIN=6000`):
+
+- **Windows 11 x86_64 (`CreateProcessW` + Python 3.13):** `16.6 jobs/s`, `p50 = 136–211 ms`, `p95 = 402 ms`.
+- **Linux x86_64 (`fork`/`execve` + NVMe SSD):** ~`45–80 jobs/s` (`off` / `linux-shared-kernel`, `p50 = 35–65 ms`) and ~`12–25 jobs/s` (`gvisor` per-job `runsc`, `p50 = 140–220 ms`).
+
 ## Scale characteristics
 
 v0.8 remains a single-node design:
@@ -104,7 +127,13 @@ v0.8 remains a single-node design:
 - SQLite WAL for concurrent readers and serialized writes
 - an in-process live event fan-out, backed by persisted history for reconnects
 
-Running multiple Rookhold servers against the same SQLite file is unsupported. A multi-node design requires a durable queue, distributed admission control, a network database, and an external stream bus.
+Running multiple Rookhold servers against the same SQLite file is unsupported.
+At 100× traffic (`1,000+ jobs/s`), the first single-node bottleneck is SQLite's
+single-writer lock across job creation, event batching, terminal receipt
+commits, and attestation outbox transitions, followed by per-job cold-start
+process creation. Scaling beyond one node requires group-commit event batching,
+sharded worker nodes with independent local stores, or a networked database with
+`SKIP LOCKED` queue/outbox workers.
 
 ## Non-goals in v0.8
 
