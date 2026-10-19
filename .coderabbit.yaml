@@ -35,7 +35,7 @@ reviews:
       - "[skip review]"
 
   path_filters:
-    - "!docs/assets/**"
+    - "!assets/**"
     - "!**/*.png"
     - "!**/*.gif"
     - "!**/*.mp4"

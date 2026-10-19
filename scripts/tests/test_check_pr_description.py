@@ -97,6 +97,24 @@ Ran the recipe syntax check and the documentation link checker.
         self.assertIn("Tier C validation must include 'Head: <commit SHA>'", errors)
         self.assertIn("Tier C validation must include concrete 'Checks:'", errors)
 
+    def test_dependabot_security_pr_with_metadata_is_accepted(self) -> None:
+        pr = {
+            "user": {"login": "dependabot[bot]"},
+            "body": (
+                "Bumps source-map-js from 1.2.1 to 1.2.2.\n"
+                "---\nupdated-dependencies:\n- dependency-name: source-map-js\n...\n"
+                "Signed-off-by: dependabot[bot] <support@github.com>\n"
+            ),
+        }
+        self.assertTrue(CHECK["is_dependabot_security_pr"](pr))
+
+    def test_non_dependabot_user_cannot_spoof_dependabot_metadata(self) -> None:
+        pr = {
+            "user": {"login": "regular-user"},
+            "body": "updated-dependencies:\nSigned-off-by: dependabot[bot]",
+        }
+        self.assertFalse(CHECK["is_dependabot_security_pr"](pr))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -36,6 +36,12 @@ const MAX_PLAN_BYTES: usize = 64 * 1024;
 const MAX_CONTROL_FRAME_BYTES: usize = 1024;
 const NOBODY_GID: u32 = 65534;
 const NOBODY_UID: u32 = 65534;
+// Supervision cadence for polling namespace-init readiness, wall-clock timeout,
+// and cancellation state when no control-socket frame is immediately ready.
+// A 20 ms tick keeps idle CPU overhead negligible while bounding worst-case
+// cancellation/timeout reaction latency to <=20 ms. Replacing this poll cadence
+// with a `pidfd_open` + `epoll` / `tokio::signal::unix::sigchld` readiness
+// wakeup is the primary path to shaving ~10-20 ms off short-job p99 tail latency.
 const CONTROL_TICK: Duration = Duration::from_millis(20);
 const DRAIN_GRACE: Duration = Duration::from_secs(2);
 const CLEANUP_GRACE: Duration = Duration::from_secs(2);

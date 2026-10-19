@@ -16,6 +16,12 @@ receive a short piece of code but should not hand it the host machine. It is a
 bounded job runner—not a persistent workspace, browser environment, remote IDE,
 or general-purpose cloud sandbox.
 
+<p align="center">
+  <img src="https://github.com/sambai-dev/rookhold/blob/main/assets/rookhold-cli-mcp-demo.gif"
+       alt="Rookhold terminal demo: running a short Python job with hard limits and saving the verifiable receipt"
+       width="720">
+</p>
+
 ## Try Rookhold locally
 
 Choose the complete **Rookhold app** bundle. It contains
@@ -102,9 +108,6 @@ Install the v0.8.0 release tarball:
 npm install https://github.com/sambai-dev/rookhold/releases/download/v0.8.0/rookhold-0.8.0.tgz
 ```
 
-Named PyPI and npm installs are temporarily deferred while maintainer registry
-accounts are activated. The release-hosted packages above contain the same SDKs.
-
 ```typescript
 import { Rookhold } from "rookhold";
 
@@ -163,6 +166,13 @@ For every submitted job, Rookhold:
 The API and persisted store remain the source of truth. The CLI, SDKs, MCP
 adapter, and dashboard are views over the same contracts.
 
+Under the hood, the gateway enforces pre-commit per-tenant and global admission
+leases, a two-phase `32 MiB → 20 MiB` logical storage reserve across execution
+and asynchronous `attestation_outbox` signing, a length-prefixed SHA-256 event
+hash chain (`MAX_EVENT_BATCH_SIZE = 256` per WAL commit), and full `cgroup.kill`
+descendant teardown. Stage-by-stage latency numbers and single-node scaling
+trade-offs are documented in [docs/architecture.md](docs/architecture.md).
+
 ## Three useful recipes
 
 - [Run an LLM-generated function](examples/llm-tool-call/)—submit generated
@@ -207,6 +217,7 @@ untrusted jobs.
 
 - [Getting started](https://rookhold.pages.dev/getting-started/quickstart)
 - [Installation choices](https://rookhold.pages.dev/getting-started/installation)
+- [How Rookhold compares](https://rookhold.pages.dev/compare)
 - [Execution model](https://rookhold.pages.dev/understand/execution-model)
 - [Receipts and verification](https://rookhold.pages.dev/understand/receipts)
 - [Deployment and operations](https://rookhold.pages.dev/deployment)
@@ -238,7 +249,9 @@ cargo build --locked --workspace
 ```
 
 Run the complete checks from [CONTRIBUTING.md](CONTRIBUTING.md) before opening a
-pull request.
+pull request. The [workspace map](crates/README.md) explains how the crates fit
+together; the [automation map](scripts/README.md) does the same for the release
+and verification scripts.
 
 ## License
 

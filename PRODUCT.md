@@ -48,7 +48,7 @@ Keep the name Rookhold and its plainspoken, technically honest voice. Security p
 - Embedded operator surface and behavior: `crates/coop-server/src/dashboard.html`.
 - API, CSP, and dashboard contract tests: `crates/coop-server/src/routes.rs`.
 - Canonical visual system and responsive rules: `DESIGN.md`.
-- Current release captures: `docs/assets/console-v0.6.png` and `docs/assets/rookhold-cli-mcp-demo.gif`.
+- Current release captures: `assets/console-v0.6.png` and `assets/rookhold-cli-mcp-demo.gif`.
 - No customer logos, testimonials, usage claims, or external brand assets are available and none may be fabricated.
 
 ## Product Principles

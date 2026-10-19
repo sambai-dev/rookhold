@@ -34,6 +34,22 @@ impl std::fmt::Debug for QueuedJob {
 /// A process-local hard bound over every accepted job which is still durably
 /// queued. The channel is only the handoff; the semaphore lease follows a job
 /// through the channel, the fair per-tenant queues, and the worker handoff.
+///
+/// # Architectural Note: Pre-Commit Two-Level Admission Lease
+///
+/// `Admission::try_reserve` acquires three resources *before* the HTTP route
+/// commits a new job to SQLite:
+/// 1. The per-tenant atomic queue depth slot (`TenantAdmissionLease`, bounded by
+///    `per_tenant` via an `AcqRel` CAS loop so one noisy tenant cannot monopolize
+///    the global backlog).
+/// 2. The global queued-job semaphore permit (`OwnedSemaphorePermit`).
+/// 3. The bounded `mpsc::OwnedPermit<QueuedJob>` channel slot.
+///
+/// Because all three leases are RAII-owned by `AdmissionReservation`, any early
+/// return, validation error, or SQLite quota/idempotency rollback automatically
+/// releases both the tenant and global queue slots on drop without leaking
+/// capacity. Once SQLite commits, `AdmissionReservation::send` hands the leases
+/// into the `QueuedJob` in `O(1)` without awaiting or failing.
 #[derive(Clone)]
 pub struct Admission {
     tx: mpsc::Sender<QueuedJob>,

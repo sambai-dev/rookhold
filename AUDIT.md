@@ -4,9 +4,32 @@
 
 **Scope:** Rust workspace, execution boundary, API tenancy, scheduler, SQLite store, dashboard, SDKs, Docker/Compose, CI/release automation, and public documentation
 
-**Status:** historical v0.2 record plus the v0.4 addendum below; not an external certification.
+**Status:** historical v0.2 record plus the v0.4 and v0.8 addenda below; not an external certification.
 
 This file records the security properties reviewed for v0.2 and the evidence expected before release. It deliberately replaces v0.1 claims that overstated host-filesystem isolation, PID-namespace behavior, event-log immutability, and hostile-test coverage.
+
+## v0.8 review addendum — 2026-09-01
+
+The v0.8 release expanded the bounded execution contract with per-job `input/`
+and `output/` file staging, versioned runtime-pack identifiers, standalone
+single-file CLI/MCP executables, and a tiered contribution gate:
+
+- **Bounded `input/` and `output/` file mounts:** Submitted input files and
+  requested output artifacts are restricted to relative, canonicalized paths
+  inside the per-job staging directories (`input/` and `output/`). Absolute
+  paths, `..` traversal segments, duplicate normalized paths, symlinks,
+  special/device files, file-count overflows, per-file byte overflows, and
+  aggregate byte-budget overflows fail closed before staging or collection.
+  Collected output artifacts are SHA-256 hashed and bound into the terminal
+  result and receipt.
+- **Runtime-pack provenance binding:** Versioned runtime-pack identifiers (for
+  example, the Bookworm base pack) do not weaken or replace executor evidence;
+  receipts continue to bind the observed interpreter, private-rootfs manifest,
+  gVisor `runsc` binary, and OCI configuration digests.
+- **Temporary local service warning:** When `rookhold run` starts a temporary
+  loopback-only local service for convenience, it explicitly reports
+  `isolation: none` and `network: host` and emits an unisolated-run warning so
+  local convenience is never mistaken for a containment boundary.
 
 ## v0.4 review addendum — 2026-08-30
 

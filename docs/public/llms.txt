@@ -5,6 +5,8 @@ and receipts. It is not a persistent development workspace or remote computer.
 
 Start: https://rookhold.pages.dev/getting-started/quickstart
 Feedback: https://rookhold.pages.dev/feedback
+Architecture: https://rookhold.pages.dev/architecture
+Compare: https://rookhold.pages.dev/compare
 CLI: https://rookhold.pages.dev/use/cli
 Python: https://rookhold.pages.dev/use/python
 TypeScript: https://rookhold.pages.dev/use/typescript
